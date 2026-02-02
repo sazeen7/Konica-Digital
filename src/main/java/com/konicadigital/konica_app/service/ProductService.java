@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -216,7 +217,19 @@ public class ProductService {
     }
 
     public Product getProductById(int id) {
-        return productRepo.findById(id)
+        Product product = productRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with ID: " + id));
+
+        // --- FIX: Filter out Variant images from the main list ---
+        // We only want images where type is "PRODUCT" to show in the main gallery
+        List<ProductImage> mainGalleryImages = product.getProductImages().stream()
+                .filter(img -> img.getType() == ImageType.PRODUCT)
+                .collect(Collectors.toList());
+
+        // Update the product object in memory (this doesn't delete from DB)
+        product.setProductImages(mainGalleryImages);
+        // ---------------------------------------------------------
+
+        return product;
     }
 }
