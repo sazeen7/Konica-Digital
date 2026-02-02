@@ -216,6 +216,54 @@ public class ProductService {
         return product;
     }
 
+    @Transactional
+    public ProductVariant updateVariant(int variantId, VariantsDTO dto) throws IOException {
+        // 1. Fetch Existing Variant
+        ProductVariant variant = variantRepo.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + variantId));
+
+        // 2. Update Basic Fields
+        variant.setWidth(Math.min(dto.getWidth(), dto.getHeight()));
+        variant.setHeight(Math.max(dto.getWidth(), dto.getHeight()));
+        variant.setQuantity(dto.getQuantity());
+
+        // 3. Handle Design Name Change (Critical for grouping!)
+        String newDesign = dto.getDesign();
+        // If user provided a design AND it's different from the old one
+        if (newDesign != null && !newDesign.isEmpty() && !newDesign.equals(variant.getDesign())) {
+
+            // A. Update the variant's design
+            variant.setDesign(newDesign);
+
+            // B. Find all images linked to this variant and update their design tag too
+            List<ProductImage> linkedImages = imageRepo.findByVariant(variant);
+            for (ProductImage img : linkedImages) {
+                img.setDesign(newDesign);
+                imageRepo.save(img);
+            }
+        }
+
+        variant = variantRepo.save(variant);
+
+        // 4. Update Price
+        Price priceEntity = priceRepo.findByVariant(variant)
+                .orElse(new Price()); // Create if missing
+
+        priceEntity.setPrice(dto.getPrice());
+        priceEntity.setVariant(variant);
+        priceRepo.save(priceEntity);
+
+        // 5. Add NEW Images (If provided)
+        if (dto.getVariantImages() != null && !dto.getVariantImages().isEmpty()) {
+            for (MultipartFile file : dto.getVariantImages()) {
+                // Save using the CURRENT design name (whether updated or old)
+                saveImage(file, ImageType.VARIANT, variant.getProduct(), variant, variant.getDesign());
+            }
+        }
+
+        return variant;
+    }
+
     public Product getProductById(int id) {
         Product product = productRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with ID: " + id));
@@ -231,5 +279,38 @@ public class ProductService {
         // ---------------------------------------------------------
 
         return product;
+    }
+
+    public List<Product> getAllProducts() {
+        List<Product> products = productRepo.findAll();
+
+        // Loop through every product to filter images
+        for (Product product : products) {
+            List<ProductImage> mainImages = product.getProductImages().stream()
+                    .filter(img -> img.getType() == ImageType.PRODUCT)
+                    .collect(Collectors.toList());
+
+            product.setProductImages(mainImages);
+        }
+
+        return products;
+    }
+
+    public void deleteProduct(int id) {
+        // Check if exists first (findById will fail if it's already soft-deleted because of the @Where clause)
+        if (!productRepo.existsById(id)) {
+            throw new RuntimeException("Product not found with ID: " + id);
+        }
+
+        // This effectively runs: "UPDATE products SET deleted = true WHERE product_id = ?"
+        productRepo.deleteById(id);
+    }
+
+    public void deleteVariant(int variantId) {
+        if (!variantRepo.existsById(variantId)) {
+            throw new RuntimeException("Variant not found with ID: " + variantId);
+        }
+        // This triggers the @SQLDelete on the Variant entity
+        variantRepo.deleteById(variantId);
     }
 }

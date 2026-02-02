@@ -1,12 +1,19 @@
 package com.konicadigital.konica_app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "products")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@SQLDelete(sql = "UPDATE products SET deleted = true WHERE product_id = ?")
+@Where(clause = "deleted = false")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +25,8 @@ public class Product {
     private String description;
 
     // Relationship to Variants
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("product") // Prevent recursion
     private List<ProductVariant> variants;
 
     // Relationship to Categories (kept from your original code)
@@ -41,6 +49,9 @@ public class Product {
         this.description = description;
     }
 
+    @Column(name = "deleted")
+    private boolean deleted = false; // Default is "not deleted"
+
     // Getters and Setters
     public int getProduct_id() { return product_id; }
     public void setProduct_id(int product_id) { this.product_id = product_id; }
@@ -59,4 +70,7 @@ public class Product {
 
     public List<ProductImage> getProductImages() { return productImages; }
     public void setProductImages(List<ProductImage> productImages) { this.productImages = productImages; }
+
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
 }

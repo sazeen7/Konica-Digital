@@ -3,11 +3,16 @@ package com.konicadigital.konica_app.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
 import java.util.List;
 
 @Entity
 @Table(name = "product_variants")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@SQLDelete(sql = "UPDATE product_variants SET deleted = true WHERE variant_id = ?")
+@Where(clause = "deleted = false")
 public class ProductVariant {
 
     @Id
@@ -38,6 +43,9 @@ public class ProductVariant {
         this.design = design;
     }
 
+    @Column(name = "deleted")
+    private boolean deleted = false;
+
     // Getters and Setters
     public int getVariant_id() { return variant_id; }
     public void setVariant_id(int variant_id) { this.variant_id = variant_id; }
@@ -59,4 +67,7 @@ public class ProductVariant {
 
     public String getDesign() { return design; }
     public void setDesign(String design) { this.design = design; }
+
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
 }
