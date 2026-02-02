@@ -1,0 +1,9 @@
+package com.konicadigital.konica_app.repository;
+
+import com.konicadigital.konica_app.model.Category;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CategoryRepository extends JpaRepository<Category, Integer> {
+}
