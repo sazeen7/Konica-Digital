@@ -1,12 +1,18 @@
 package com.konicadigital.konica_app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 
 @Entity
 @Table(name = "users")
-public class Users {
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+public class User {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int user_id;
@@ -16,8 +22,13 @@ public class Users {
     private String password;
     private String role;
 
+    private String otp;
+    private LocalDateTime otpExpiry;
+    private boolean isVerified = false;
+    private boolean isGoogleLogin = false;
+
     @Lob
-    private byte[] profile_photo;
+    private String profile_photo;
     private String phone;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
@@ -32,7 +43,7 @@ public class Users {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<ShippingAddress> addresses;
 
-    public Users(int user_id, String name, String email, String password, String role, byte[] profile_photo, String phone) {
+    public User(int user_id, String name, String email, String password, String role, String profile_photo, String phone, String otp, LocalDateTime otpExpiry, boolean isVerified, boolean isGoogleLogin) {
         this.user_id = user_id;
         this.name = name;
         this.email = email;
@@ -40,9 +51,13 @@ public class Users {
         this.role = role;
         this.profile_photo = profile_photo;
         this.phone = phone;
+        this.otp = otp;
+        this.otpExpiry = otpExpiry;
+        this.isVerified = isVerified;
+        this.isGoogleLogin = isGoogleLogin;
     }
 
-    public Users() {
+    public User() {
 
     }
 
@@ -86,11 +101,11 @@ public class Users {
         this.role = role;
     }
 
-    public byte[] getProfile_photo() {
+    public String getProfile_photo() {
         return profile_photo;
     }
 
-    public void setProfile_photo(byte[] profile_photo) {
+    public void setProfile_photo(String profile_photo) {
         this.profile_photo = profile_photo;
     }
 
@@ -100,5 +115,33 @@ public class Users {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public LocalDateTime getOtpExpiry() {
+        return otpExpiry;
+    }
+    public void setOtpExpiry(LocalDateTime otpExpiry) {
+        this.otpExpiry = otpExpiry;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+    public void setVerified(boolean verified) {
+        isVerified = verified;
+    }
+
+    public boolean isGoogleLogin() {
+        return isGoogleLogin;
+    }
+    public void setGoogleLogin(boolean googleLogin) {
+        isGoogleLogin = googleLogin;
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+    public void setOtp(String otp) {
+        this.otp = otp;
     }
 }

@@ -21,7 +21,7 @@ public class ShippingAddress {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+    private User user;
 
     @OneToMany(mappedBy = "shippingAddress", cascade = CascadeType.ALL)
     private List<Order> orders;

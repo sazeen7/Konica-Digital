@@ -20,7 +20,7 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+    private User user;
 
     public Review(int review_id, String review_description, double rating) {
         this.review_id = review_id;
